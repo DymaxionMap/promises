@@ -15,16 +15,23 @@ Promise.promisifyAll(fs);
 Promise.promisifyAll(request);
 
 var fetchProfileAndWriteToFile = function(readFilePath, writeFilePath) {
-  // return fs.readFileAsync(readFilePath).then(contents => {
-  //   return contents.toString('utf8').split('\n')[0];
-  // }, err => err)
-  //   .then(firstLine => {
-  //     var data = [];
-  //     request('https://api.github.com/users/' + firstLine).on('data');
-
-  //   }).then(response => {
-  //     return fs.writeFileAsync(writeFilePath, userProfile.toString('utf8'));
-  //   });
+  return fs.readFileAsync(readFilePath)
+    .then(contents => {
+      return contents.toString('utf8').split('\n')[0];
+    }, err => err)
+    .then(firstLine => {
+      return new Promise((resolve, reject) => {
+        request('https://api.github.com/users/' + firstLine, (err, response, body) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(body);
+          }
+        });
+      });
+    }).then(body => {
+      return fs.writeFileAsync(writeFilePath, body);
+    });
 };
 
 // Export these functions so we can test them
